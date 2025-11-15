@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShowTime</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #0a0a0a;
+      color: white;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* 🎥 Background overlay with movie blur */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: url('https://images.unsplash.com/photo-1505685296765-3a2736de412f?auto=format&fit=crop&w=1600&q=80') no-repeat center/cover;
+      opacity: 0.15;
+      filter: blur(8px);
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.8), rgba(10,10,10,0.95));
+      z-index: -1;
+    }
+
+    header {
+      text-align: center;
+      background: linear-gradient(90deg, #ff0055, #ff6600);
+      padding: 20px 0;
+      box-shadow: 0 4px 20px rgba(255, 0, 85, 0.5);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    /* 🔍 Search bar */
+    #search-form {
+      display: flex;
+      justify-content: center;
+      margin: 25px 0;
+    }
+
+    #search-input {
+      width: 70%;
+      max-width: 400px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 25px;
+      border: none;
+      outline: none;
+      background-color: #1a1a1a;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+      transition: 0.3s;
+    }
+
+    #search-input:focus {
+      box-shadow: 0 0 15px rgba(255, 0, 85, 0.6);
+    }
+
+    /* 🧭 Categories */
+    #category-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+      gap: 10px;
+    }
+
+    #category-buttons button {
+      background: linear-gradient(45deg, #ff0055, #ff6600);
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+
+    #category-buttons button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(45deg, #ff6600, #ff0055);
+    }
+
+    /* 🎬 Movie grid */
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .movie-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+
+    .movie-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: 270px;
+      object-fit: cover;
+    }
+
+    .movie-info {
+      padding: 12px;
+      text-align: center;
+    }
+
+    .movie-title {
+      font-size: 16px;
+      margin-bottom: 5px;
+      color: #ffccff;
+    }
+
+    .movie-year {
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+      font-size: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 🎞️ Movie details modal */
+    #modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      z-index: 10;
+    }
+
+    #movie-modal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1a1a;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 25px rgba(255, 0, 85, 0.5);
+      width: 90%;
+      max-width: 500px;
+      z-index: 11;
+      display: none;
+      color: white;
+      text-align: center;
+    }
+
+    #movie-modal.show,
+    #modal-overlay.show {
+      display: block;
+    }
+
+    #movie-modal h2 {
+      color: #ff66b2;
+      margin-bottom: 10px;
+    }
+
+    #movie-modal .details {
+      margin: 8px 0;
+    }
+
+    #movie-modal .btn-group {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .action-btn {
+      background: linear-gradient(45deg, #ff0055, #ff6600);
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(45deg, #ff6600, #ff0055);
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #ff0066;
+      font-size: 24px;
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🎬 ShowTime</h1>
+  </header>
+
+  <form id="search-form">
+    <input type="text" id="search-input" placeholder="Search for movies..." />
+  </form>
+
+  <div id="category-buttons">
+    <button data-query="Hollywood">Hollywood</button>
+    <button data-query="Bollywood">Bollywood</button>
+    <button data-query="Series">Series</button>
+    <button data-query="Animation">Animation</button>
+    <button data-query="Upcoming">Upcoming</button>
+  </div>
+
+  <div class="container" id="movie-container"></div>
+
+  <footer>© 2025 ShowTime | All rights reserved</footer>
+
+  <!-- Modal + Overlay -->
+  <div id="modal-overlay"></div>
+  <div id="movie-modal">
+    <button class="close-btn">&times;</button>
+    <h2 id="modal-title"></h2>
+    <p class="details" id="modal-quality"></p>
+    <p class="details" id="modal-rating"></p>
+    <p class="details" id="modal-duration"></p>
+
+    <div class="btn-group">
+      <button class="action-btn" id="stream-btn">▶️ Stream</button>
+      <button class="action-btn" id="download-btn">⬇️ Download</button>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = 'YOUR_OMDB_API_KEY'; // replace with your actual key
+
+    const form = document.getElementById('search-form');
+    const input = document.getElementById('search-input');
+    const container = document.getElementById('movie-container');
+    const buttons = document.querySelectorAll('#category-buttons button');
+    const modal = document.getElementById('movie-modal');
+    const overlay = document.getElementById('modal-overlay');
+    const modalTitle = document.getElementById('modal-title');
+    const modalQuality = document.getElementById('modal-quality');
+    const modalRating = document.getElementById('modal-rating');
+    const modalDuration = document.getElementById('modal-duration');
+    const streamBtn = document.getElementById('stream-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const closeBtn = document.querySelector('.close-btn');
+
+    function getRandomQuality() {
+      return Math.random() > 0.5 ? "HD" : "CAM";
+    }
+
+    async function searchMovies(query) {
+      const url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      container.innerHTML = '';
+
+      if (data.Response === "True") {
+        data.Search.forEach(movie => {
+          const card = document.createElement('div');
+          card.className = 'movie-card';
+          card.innerHTML = `
+            <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/200x300'}" alt="${movie.Title}">
+            <div class="movie-info">
+              <h3 class="movie-title">${movie.Title}</h3>
+              <p class="movie-year">${movie.Year}</p>
+            </div>
+          `;
+          card.addEventListener('click', () => showMovieDetails(movie.imdbID));
+          container.appendChild(card);
+        });
+      } else {
+        container.innerHTML = `<p style="text-align:center;">No results found for "${query}".</p>`;
+      }
+    }
+
+    async function showMovieDetails(id) {
+      const res = await fetch(`https://www.omdbapi.com/?apikey=${apiKey}&i=${id}&plot=short`);
+      const data = await res.json();
+      if (data.Response === "True") {
+        modalTitle.textContent = data.Title;
+        modalQuality.textContent = "Quality: " + getRandomQuality();
+        modalRating.textContent = "Rating: " + (data.imdbRating !== "N/A" ? data.imdbRating : "Not Rated");
+        modalDuration.textContent = "Duration: " + (data.Runtime || "Unknown");
+        modal.classList.add('show');
+        overlay.classList.add('show');
+
+        streamBtn.onclick = () => alert(`Streaming "${data.Title}"`);
+        downloadBtn.onclick = () => alert(`Downloading "${data.Title}"`);
+      }
+    }
+
+    function closeModal() {
+      modal.classList.remove('show');
+      overlay.classList.remove('show');
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (input.value.trim()) searchMovies(input.value.trim());
+    });
+
+    buttons.forEach(b => b.addEventListener('click', () => searchMovies(b.dataset.query)));
+    overlay.addEventListener('click', closeModal);
+    closeBtn.addEventListener('click', closeModal);
+
+    // default load
+    searchMovies('Hollywood');
+  </script>
+</body>
+</html>
